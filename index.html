@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaSafety | GxP Regulatory Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-[#0f172a] text-slate-200 min-h-screen antialiased">
+
+    <!-- Global Navigation -->
+    <nav class="bg-slate-900/50 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                <h1 class="text-lg font-bold tracking-tight text-white">PharmaSafety <span class="text-xs text-amber-500 font-mono ml-2">v1.0.2</span></h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="hidden md:block text-[10px] text-slate-500 font-mono uppercase tracking-widest text-right">
+                    FDA 21 CFR Part 11<br>Validated Environment
+                </div>
+                <div class="bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-md">
+                    <span class="text-[10px] text-slate-500 font-mono block leading-none mb-1">OPERATOR</span>
+                    <span class="text-xs font-bold text-emerald-400 font-mono uppercase">PV_OFFICER_RE01</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left Panel: Data Entry -->
+            <div class="lg:col-span-4 space-y-6">
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-2xl">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-amber-500">Log Adverse Event</h2>
+                        <span class="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-[10px] text-amber-500 font-mono uppercase">Mandatory</span>
+                    </div>
+
+                    <form id="safety-form" class="space-y-4">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Target Compound</label>
+                            <select id="drug-name" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all" required>
+                                <option value="">Select Drug Batch...</option>
+                                <option value="Lisinopril (Batch: L-2026)">Lisinopril (Batch: L-2026)</option>
+                                <option value="Metformin (Batch: M-8891)">Metformin (Batch: M-8891)</option>
+                                <option value="Atorvastatin (Batch: A-4011)">Atorvastatin (Batch: A-4011)</option>
+                                <option value="Amoxicillin (Batch: AX-092)">Amoxicillin (Batch: AX-092)</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Patient ID</label>
+                                <input type="text" id="patient-id" placeholder="PT-0000" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm font-mono text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none" required>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Severity</label>
+                                <select id="severity" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none" required>
+                                    <option value="Mild">Mild</option>
+                                    <option value="Moderate">Moderate</option>
+                                    <option value="Severe / Critical">Severe / Critical</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Clinical Symptoms</label>
+                            <textarea id="symptoms" rows="3" placeholder="Enter detailed clinical observation logs..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none resize-none" required></textarea>
+                        </div>
+
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-lg">
+                            <p class="text-[10px] text-slate-500 leading-relaxed italic">
+                                <strong class="text-slate-400 not-italic">GxP Attestation:</strong> Submitting this record signs it with a cryptographic hash linked to your operator ID for regulatory audit tracking.
+                            </p>
+                        </div>
+
+                        <button type="submit" id="submit-btn" class="w-full bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold py-3 rounded-lg transition-all active:scale-95 shadow-lg shadow-amber-600/10">
+                            Commit Record to Ledger
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Panel: Ledger & Analytics -->
+            <div class="lg:col-span-8 space-y-6">
+                
+                <!-- Analytics Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Records</p>
+                        <p id="total-records" class="text-3xl font-bold text-white mt-1">0</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl border-l-4 border-l-rose-500">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Critical Alerts</p>
+                        <p id="critical-alerts" class="text-3xl font-bold text-rose-500 mt-1">0</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl border-l-4 border-l-emerald-500">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">System Integrity</p>
+                        <p class="text-sm font-bold text-emerald-500 font-mono mt-3 uppercase tracking-tighter">100% VALIDATED</p>
+                    </div>
+                </div>
+
+                <!-- Ledger Table -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+                    <div class="p-4 border-b border-slate-800 bg-slate-900/80 flex justify-between items-center">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Clinical Data Registry</h3>
+                        <input type="text" id="search-ledger" placeholder="Search Patient ID or Compound..." class="bg-slate-950 border border-slate-800 text-xs p-1.5 px-3 rounded-md outline-none focus:border-amber-500 w-64">
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-950 text-slate-500 font-mono uppercase text-[10px]">
+                                <tr>
+                                    <th class="p-4 border-b border-slate-800">Token ID</th>
+                                    <th class="p-4 border-b border-slate-800">Compound</th>
+                                    <th class="p-4 border-b border-slate-800">Patient</th>
+                                    <th class="p-4 border-b border-slate-800 text-center">Severity</th>
+                                    <th class="p-4 border-b border-slate-800">Commit Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="record-list" class="divide-y divide-slate-800">
+                                <!-- Dynamic Content -->
+                            </tbody>
+                        </table>
+                        <div id="empty-state" class="p-12 text-center text-slate-500 italic text-xs">
+                            No pharmacovigilance records found in registry.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audit Log Section -->
+                <div class="bg-slate-950 border border-slate-900 rounded-xl p-4 shadow-inner">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-[10px] font-bold text-emerald-500 uppercase font-mono tracking-widest">Master Audit Trail (Read-Only)</h4>
+                        <span class="text-[9px] text-slate-600 font-mono uppercase">Sync: Real-time</span>
+                    </div>
+                    <div id="audit-trail" class="h-40 overflow-y-auto custom-scrollbar space-y-2 pr-2">
+                        <!-- Dynamic Logs -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = '/api';
+        let records = [];
+
+        async function fetchState() {
+            try {
+                const [recRes, auditRes] = await Promise.all([
+                    fetch(`${API_URL}/records`),
+                    fetch(`${API_URL}/audit-logs`)
+                ]);
+                records = await recRes.json();
+                const audits = await auditRes.json();
+                
+                renderUI(records);
+                renderAudit(audits);
+            } catch (err) {
+                console.error('Connection to secure ledger failed:', err);
+            }
+        }
+
+        function renderUI(data) {
+            const list = document.getElementById('record-list');
+            const empty = document.getElementById('empty-state');
+            const total = document.getElementById('total-records');
+            const critical = document.getElementById('critical-alerts');
+
+            list.innerHTML = '';
+            let critCount = 0;
+
+            if (data.length > 0) {
+                empty.classList.add('hidden');
+                data.forEach(rec => {
+                    if (rec.severity.includes('Severe')) critCount++;
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-800/30 transition-colors group";
+                    tr.innerHTML = `
+                        <td class="p-4 font-mono text-amber-500 font-bold">${rec.id}</td>
+                        <td class="p-4 font-medium text-slate-200">${rec.drug_name}</td>
+                        <td class="p-4 font-mono text-slate-400">${rec.patient_id}</td>
+                        <td class="p-4 text-center">
+                            <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                                rec.severity.includes('Severe') ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' : 
+                                rec.severity === 'Moderate' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 
+                                'bg-sky-500/10 text-sky-500 border border-sky-500/20'
+                            }">${rec.severity}</span>
+                        </td>
+                        <td class="p-4 text-slate-500 font-mono text-[10px]">${new Date(rec.created_at).toLocaleString()}</td>
+                    `;
+                    list.appendChild(tr);
+                });
+            } else {
+                empty.classList.remove('hidden');
+            }
+
+            total.innerText = data.length;
+            critical.innerText = critCount;
+        }
+
+        function renderAudit(logs) {
+            const trail = document.getElementById('audit-trail');
+            trail.innerHTML = logs.map(log => `
+                <div class="border-b border-slate-900 pb-2 text-[10px] font-mono leading-tight">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-emerald-500 font-bold">[${log.action_type}]</span>
+                        <span class="text-slate-600">${new Date(log.timestamp).toISOString()}</span>
+                    </div>
+                    <p class="text-slate-400 mb-1">${log.message}</p>
+                    <div class="flex gap-4 text-slate-600 text-[9px]">
+                        <span>SIGNATURE: <span class="text-slate-500">${log.verification_hash}</span></span>
+                        <span>OPERATOR: <span class="text-slate-500">${log.operator}</span></span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('safety-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.innerText = "Encrypting Block...";
+
+            const payload = {
+                drug_name: document.getElementById('drug-name').value,
+                patient_id: document.getElementById('patient-id').value,
+                severity: document.getElementById('severity').value,
+                symptoms: document.getElementById('symptoms').value
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/records`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    document.getElementById('safety-form').reset();
+                    fetchState();
+                }
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Commit Record to Ledger";
+            }
+        });
+
+        document.getElementById('search-ledger').addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase();
+            const filtered = records.filter(r => 
+                r.drug_name.toLowerCase().includes(q) || 
+                r.patient_id.toLowerCase().includes(q) ||
+                r.id.toLowerCase().includes(q)
+            );
+            renderUI(filtered);
+        });
+
+        // Initial Load
+        fetchState();
+    </script>
+</body>
+</html>
