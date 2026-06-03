@@ -1,0 +1,12 @@
+{
+  "name": "pharmacovigilance-master-record",
+  "version": "1.0.0",
+  "description": "A GxP-compliant digital framework for managing Pharmacovigilance Master Records.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
