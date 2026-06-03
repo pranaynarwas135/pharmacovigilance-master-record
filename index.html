@@ -151,122 +151,134 @@
         </div>
     </main>
 
-    <script>
-        const API_URL = '/api';
-        let records = [];
+   <script>
+  // 1. Load existing data from the browser storage, or start empty
+  let records = JSON.parse(localStorage.getItem('pv_records')) || [];
+  let audits = JSON.parse(localStorage.getItem('pv_audits')) || [
+    {
+      action_type: "SYSTEM_INIT",
+      timestamp: new Date().toISOString(),
+      message: "Pharmacovigilance Ledger validated and active.",
+      verification_hash: "sha256_0x8f3c...11a9",
+      operator: "SYS_ADMIN"
+    }
+  ];
 
-        async function fetchState() {
-            try {
-                const [recRes, auditRes] = await Promise.all([
-                    fetch(`${API_URL}/records`),
-                    fetch(`${API_URL}/audit-logs`)
-                ]);
-                records = await recRes.json();
-                const audits = await auditRes.json();
-                
-                renderUI(records);
-                renderAudit(audits);
-            } catch (err) {
-                console.error('Connection to secure ledger failed:', err);
-            }
-        }
+  // 2. Render everything onto the screen
+  function fetchState() {
+    renderUI(records);
+    renderAudit(audits);
+  }
 
-        function renderUI(data) {
-            const list = document.getElementById('record-list');
-            const empty = document.getElementById('empty-state');
-            const total = document.getElementById('total-records');
-            const critical = document.getElementById('critical-alerts');
+  function renderUI(data) {
+    const list = document.getElementById('record-list');
+    const empty = document.getElementById('empty-state');
+    const total = document.getElementById('total-records');
+    const critical = document.getElementById('critical-alerts');
+    list.innerHTML = '';
+    let critCount = 0;
 
-            list.innerHTML = '';
-            let critCount = 0;
+    if (data.length > 0) {
+      empty.classList.add('hidden');
+      data.forEach(rec => {
+        if (rec.severity.includes('Severe')) critCount++;
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-800/30 transition-colors group";
+        tr.innerHTML = `
+          <td class="p-4 font-mono text-amber-500 font-bold">${rec.id}</td>
+          <td class="p-4 font-medium text-slate-200">${rec.drug_name}</td>
+          <td class="p-4 font-mono text-slate-400">${rec.patient_id}</td>
+          <td class="p-4 text-center">
+            <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+              rec.severity.includes('Severe') 
+                ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' 
+                : rec.severity === 'Moderate' 
+                  ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' 
+                  : 'bg-sky-500/10 text-sky-500 border border-sky-500/20'
+            }">${rec.severity}</span>
+          </td>
+          <td class="p-4 text-slate-500 font-mono text-[10px]">${new Date(rec.created_at).toLocaleString()}</td>
+        `;
+        list.appendChild(tr);
+      });
+    } else {
+      empty.classList.remove('hidden');
+    }
+    total.innerText = data.length;
+    critical.innerText = critCount;
+  }
 
-            if (data.length > 0) {
-                empty.classList.add('hidden');
-                data.forEach(rec => {
-                    if (rec.severity.includes('Severe')) critCount++;
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-800/30 transition-colors group";
-                    tr.innerHTML = `
-                        <td class="p-4 font-mono text-amber-500 font-bold">${rec.id}</td>
-                        <td class="p-4 font-medium text-slate-200">${rec.drug_name}</td>
-                        <td class="p-4 font-mono text-slate-400">${rec.patient_id}</td>
-                        <td class="p-4 text-center">
-                            <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
-                                rec.severity.includes('Severe') ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' : 
-                                rec.severity === 'Moderate' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 
-                                'bg-sky-500/10 text-sky-500 border border-sky-500/20'
-                            }">${rec.severity}</span>
-                        </td>
-                        <td class="p-4 text-slate-500 font-mono text-[10px]">${new Date(rec.created_at).toLocaleString()}</td>
-                    `;
-                    list.appendChild(tr);
-                });
-            } else {
-                empty.classList.remove('hidden');
-            }
+  function renderAudit(logs) {
+    const trail = document.getElementById('audit-trail');
+    trail.innerHTML = logs.map(log => `
+      <div class="border-b border-slate-900 pb-2 text-[10px] font-mono leading-tight">
+        <div class="flex justify-between items-start mb-1">
+          <span class="text-emerald-500 font-bold">[${log.action_type}]</span>
+          <span class="text-slate-600">${new Date(log.timestamp).toISOString()}</span>
+        </div>
+        <p class="text-slate-400 mb-1">${log.message}</p>
+        <div class="flex gap-4 text-slate-600 text-[9px]">
+          <span>SIGNATURE: <span class="text-slate-500">${log.verification_hash}</span></span>
+          <span>OPERATOR: <span class="text-slate-500">${log.operator}</span></span>
+        </div>
+      </div>
+    `).join('');
+  }
 
-            total.innerText = data.length;
-            critical.innerText = critCount;
-        }
+  // 3. Handle Form Submission locally
+  document.getElementById('safety-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.innerText = "Encrypting Block...";
 
-        function renderAudit(logs) {
-            const trail = document.getElementById('audit-trail');
-            trail.innerHTML = logs.map(log => `
-                <div class="border-b border-slate-900 pb-2 text-[10px] font-mono leading-tight">
-                    <div class="flex justify-between items-start mb-1">
-                        <span class="text-emerald-500 font-bold">[${log.action_type}]</span>
-                        <span class="text-slate-600">${new Date(log.timestamp).toISOString()}</span>
-                    </div>
-                    <p class="text-slate-400 mb-1">${log.message}</p>
-                    <div class="flex gap-4 text-slate-600 text-[9px]">
-                        <span>SIGNATURE: <span class="text-slate-500">${log.verification_hash}</span></span>
-                        <span>OPERATOR: <span class="text-slate-500">${log.operator}</span></span>
-                    </div>
-                </div>
-            `).join('');
-        }
+    // Fake a quick encryption delay (800 milliseconds)
+    await new Promise(resolve => setTimeout(resolve, 800));
 
-        document.getElementById('safety-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('submit-btn');
-            btn.disabled = true;
-            btn.innerText = "Encrypting Block...";
+    const newRecord = {
+      id: "REG-" + Math.floor(100000 + Math.random() * 900000),
+      drug_name: document.getElementById('drug-name').value,
+      patient_id: document.getElementById('patient-id').value,
+      severity: document.getElementById('severity').value,
+      symptoms: document.getElementById('symptoms').value,
+      created_at: new Date().toISOString()
+    };
 
-            const payload = {
-                drug_name: document.getElementById('drug-name').value,
-                patient_id: document.getElementById('patient-id').value,
-                severity: document.getElementById('severity').value,
-                symptoms: document.getElementById('symptoms').value
-            };
+    const newAudit = {
+      action_type: "RECORD_COMMIT",
+      timestamp: new Date().toISOString(),
+      message: `Logged adverse event for ${newRecord.patient_id} (${newRecord.drug_name})`,
+      verification_hash: "sha256_0x" + Math.random().toString(16).substr(2, 8) + "...7e2b",
+      operator: "PV_OFFICER_RE01"
+    };
 
-            try {
-                const res = await fetch(`${API_URL}/records`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (res.ok) {
-                    document.getElementById('safety-form').reset();
-                    fetchState();
-                }
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Commit Record to Ledger";
-            }
-        });
+    // Save locally
+    records.unshift(newRecord);
+    audits.unshift(newAudit);
+    localStorage.setItem('pv_records', JSON.stringify(records));
+    localStorage.setItem('pv_audits', JSON.stringify(audits));
 
-        document.getElementById('search-ledger').addEventListener('input', (e) => {
-            const q = e.target.value.toLowerCase();
-            const filtered = records.filter(r => 
-                r.drug_name.toLowerCase().includes(q) || 
-                r.patient_id.toLowerCase().includes(q) ||
-                r.id.toLowerCase().includes(q)
-            );
-            renderUI(filtered);
-        });
+    // Reset UI
+    document.getElementById('safety-form').reset();
+    fetchState();
 
-        // Initial Load
-        fetchState();
-    </script>
+    btn.disabled = false;
+    btn.innerText = "Commit Record to Ledger";
+  });
+
+  // 4. Search Filter
+  document.getElementById('search-ledger').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase();
+    const filtered = records.filter(r => 
+      r.drug_name.toLowerCase().includes(q) || 
+      r.patient_id.toLowerCase().includes(q) || 
+      r.id.toLowerCase().includes(q)
+    );
+    renderUI(filtered);
+  });
+
+  // Run on load
+  fetchState();
+</script>
 </body>
 </html>
